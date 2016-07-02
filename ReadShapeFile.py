@@ -19,6 +19,7 @@ class FileGen(object):
 			print k
 
 	def getGPS(self):
+		print 'Reading File - for GPS coordinates..'
 		self.min_long = self.file['features'][0]['geometry']['coordinates'][0][0][0]
 		self.min_lat = self.file['features'][0]['geometry']['coordinates'][0][0][1]
 
@@ -33,13 +34,14 @@ class FileGen(object):
 		 			self.min_long = min_long
 		 		if self.min_lat > min_lat:
 		 			self.min_lat = min_lat
-
+		print 'Reading File complete..'
 		return self.gps
 
 	#TODO:: Check implementation
 
 
 	def GPStoEUC(self):
+		print 'Converting to GPS to Euclidean coordinates .. '
 		ned_orig = array([self.min_lat * (pi/180), self.min_long * (pi/180)]).transpose()
 		polys = {}
 		for indx in self.gps:
@@ -58,4 +60,5 @@ class FileGen(object):
 				#print matrix_coord
 				#print x_ned
 			polys[indx] = poly
+		print 'GPS to EUC conversion complete.. '
 		return polys

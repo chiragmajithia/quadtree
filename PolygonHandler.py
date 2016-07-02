@@ -9,7 +9,7 @@ class PolygonHandler(object):
 	seeds = {}
 	origin = [0,0]
 	dim = [0,0]
-
+	unfilled_polygons = {}
 	def disp(self):
 		print 'origin' + str(self.origin)
 		print 'dim' + str(self.dim)
@@ -32,6 +32,7 @@ class PolygonHandler(object):
 				#raw_input()
 		for p in del_list:
 			del self.polygons[p]
+		print 'Vertices checked for closed polygons..'
 
 
 	def maxminXY(self):
@@ -98,13 +99,14 @@ class PolygonHandler(object):
 			r = self.inside_polygon(x,y,polygon)
 			
 			#print str(x) + ',' + str(y) + ' checking for polygon[' + str(key) + '] = ' + str(self.inside_polygon(x,y,polygon))
-			if cnt > 999:
-				print str(x) + ',' + str(y) + 'is inside polygon[' + str(key) + '] = ' + str(r)
-				print str(key) + 'cnt overflowed' + str(cnt)
+			#if cnt > 999:
+				#print str(x) + ',' + str(y) + 'is inside polygon[' + str(key) + '] = ' + str(r)
+				#print str(key) + 'cnt overflowed' + str(cnt)
 			#raw_input()
 		print 'Final ' + str(x) + ',' + str(y) + 'is inside polygon[' + str(key) + '] = ' + str(r)		
-		if not r:
-			raw_input('Press Key to continue..')
+		# if not r:
+		# 	raw_input('Press Key to continue..')
+		# 	self.unfilled_polygons[key] = [x,y]
 		return y,x,r
 
 	def pointInPoly(self,x,y):
@@ -149,10 +151,9 @@ class PolygonHandler(object):
 		f.openFile()
 		g = f.getGPS()
 		self.polygons = f.GPStoEUC()
-		print 'shape of polygons:: ' + str(len(self.polygons[0]))
-		raw_input()
 		self.maxminXY()
 		self.updatePolygons()
+		print 'Polygons and Map generated'
 		return self.polygons
 
 	def updatePolygons(self):
@@ -160,17 +161,7 @@ class PolygonHandler(object):
 		self.origin[1] = int(round(self.origin[1]/self.SCALE))
 		self.dim[0] = int(round(self.dim[0]/self.SCALE)) + 20
 		self.dim[1] = int(round(self.dim[1]/self.SCALE)) + 20
-		print 'Updating the scale'
-		print 'Dimension of Map := ' + str(self.dim)
-		print 'Origin of the Map := ' + str(self.origin)
-
-		# pop_list = []
-		# for p,polygon in self.polygons.iteritems():
-		# 	if len(polygon) < 40:
-		# 		pop_list.append(p)
-
-		# for p in pop_list:
-		# 	self.polygons.pop(p,None)
+		print 'Updating the coordinates to origin(' + str(self.origin) + ') and scale  = ' + str(self.SCALE)
 
 		for p,polygon in self.polygons.iteritems():
 			vertices = []
@@ -179,6 +170,7 @@ class PolygonHandler(object):
 					y = round(float(v[1])/self.SCALE) - self.origin[1]
 					vertices.append([x,y])
 			self.polygons[p] = vertices
+		print 'Shifting euclidean coordinates to given origin done!'
 
 
 	def readCSV(self,path):
