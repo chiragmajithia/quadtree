@@ -12,6 +12,8 @@ class Map(object):
 	imgplot = []
 
 	def __init__(self,dim = [1,0],SCALE = 1,type = 'CSV'):
+		self.polygons = PolygonHandler()
+		self.imgplot = []
 		print 'In Map'
 		path = os.path.dirname(os.path.abspath('resource'))
 		if type == 'CSV':
@@ -43,8 +45,12 @@ class Map(object):
 		print 'Vertices connected for polygon[' + str(key) + ']'
 
 
-	def fillPoly(self,p):
-		(x,y,r) = self.polygons.generateSeed(p)
+	def fillPoly(self,p,type = 'random'):
+		self.drawBoundary(p,fill_val = 255)
+		if type == 'random':
+			(x,y,r) = self.polygons.generateRandomSeed(p)
+		else:
+			(x,y,r) = self.getSeed(p,255)
 		if r:
 			self.fill(x,y)
 
@@ -60,7 +66,9 @@ class Map(object):
 			fill_val = p%253 + 1
 			print 'fill val = ' + str(fill_val)
 			if r:
+				print 'Filling polygon ' + str(p)
 				self.fill(x,y,fill_val = fill_val,bound_val = bound_val)
+				self.polygons.filled_polygons[p] = [x,y]
 				#self.showMap()
 			self.drawBoundary(p,fill_val = fill_val)
 			if fill_val == 1:
@@ -151,8 +159,8 @@ class Map(object):
 
 		  n-=1
 
-	def saveMap(self):
-		np.savetxt(self.map,delimiter = ',')
+	def saveMap(self,name = 'map.csv'):
+		np.savetxt(name,self.map,delimiter = ',',fmt = '%u')
 
 	def saveImage(self, name = 'map.jpg'):
 		self.map = np.invert(self.map)
@@ -165,8 +173,6 @@ class Map(object):
 			plt.show(block = block)
 			plt.grid(1)
 			plt.ion()
-			print 'does not exist'
-			raw_input()
 		else:
 			self.imgplot.set_data(self.map)
 			plt.draw()
@@ -177,6 +183,63 @@ class Map(object):
 		#plt.show(block = block)
 		#plt.draw()
 		#time.sleep(1)
+
+	def zoomPolygon(self,key,highlight = True):
+		self.refreshMap()
+		if key == -1:
+			self.resizeMap()
+		else:
+			(max_x,min_x,max_y,min_y) = self.polygons.getPolygonBounds(key)
+			plt.axis([min_y-10,max_y+10,min_x-10,max_x+10])
+			if highlight:
+				self.drawBoundary(key,fill_val = 100)
+				print 'draw'
+				self.showMap()
+		plt.draw()
+
+	def zoomAllUnfilledPolygons(self,check = True):
+		for k in self.polygons.unfilled_polygons.keys():
+			self.zoomPolygon(k)
+			if not check:
+				inp = raw_input('Press key to continue / Enter seed')
+				if inp != '':
+					inp = eval(inp)
+					self.fill(inp[0],inp[1])
+					print str(k) + 'polygon filled'
+			else:
+				time.sleep(0.5)
+
+	def zoomAllFilledPolygons(self,check = True):
+		for k in self.polygons.filled_polygons.keys():
+			self.zoomPolygon(k)
+			if not check:
+
+				cntd = 'Y'
+				while cntd == 'Y':
+					inp = raw_input('Press key to continue / Enter seed')
+					if inp != '':
+						inp = eval(inp)
+						k_ = self.polygons.pointInPoly(inp[0],inp[1])
+						if k == k_ :
+							self.fill(inp[1],inp[0],fill_val = 100, bound_val =100)
+							print str(k) + 'polygon filled'
+							self.showMap()
+							raw_input('Press Any Key to Continue')
+						else:
+							print 'Seed outside given polygon'
+						cntd = raw_input('Continue with this polygon? Y/N')
+						if(cntd == 'N'):
+							break
+					else:
+						break
+
+			else:
+				time.sleep(0.5)
+
+
+	def resizeMap(self):
+		plt.axis([0,self.polygons.dim[1],self.polygons.dim[0],0])
+		plt.draw()
 
 	def getUnfilledPolygons(self):
 		return self.polygons.unfilled_polygons

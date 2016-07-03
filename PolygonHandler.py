@@ -10,6 +10,16 @@ class PolygonHandler(object):
 	origin = [0,0]
 	dim = [0,0]
 	unfilled_polygons = {}
+	filled_polygons = {}
+
+	def __init__(self):
+		self.unfilled_polygons = {}
+		self.filled_polygons = {}
+		self.seeds = {}
+		self.polygons = {}
+		self.origin = [0,0]
+		self.dim = [0,0]
+		
 	def disp(self):
 		print 'origin' + str(self.origin)
 		print 'dim' + str(self.dim)
@@ -55,7 +65,7 @@ class PolygonHandler(object):
 		return max_x,max_y,min_x,min_y
 
 	def generateSeed(self,key):
-		print 'computing for ' + str(key) + 'polygon of size' + str(len(self.polygons[key]))
+		print 'generating seed for ' + str(key) + 'polygon of size' + str(len(self.polygons[key]))
 		(x,y) = np.mean(self.polygons[key],0)
 		x = int(round(x))
 		y = int(round(y))
@@ -66,8 +76,7 @@ class PolygonHandler(object):
 		else:
 			return self.generateRandomSeed(key)
 
-
-	def generateRandomSeed(self,key):
+	def getPolygonBounds(self,key):
 		polygon = self.polygons[key]
 		max_x = 0
 		max_y = 0
@@ -82,6 +91,11 @@ class PolygonHandler(object):
 				min_x = v[0]
 			if min_y > v[1]:
 				min_y = v[1]
+		return max_x,min_x,max_y,min_y
+
+	def generateRandomSeed(self,key):
+		polygon = self.polygons[key]
+		(max_x,min_x,max_y,min_y) = self.getPolygonBounds(key)
 		print max_x
 		print max_y
 		print min_x
