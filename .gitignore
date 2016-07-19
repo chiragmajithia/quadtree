@@ -6,3 +6,9 @@ output_jpg/*
 
 #ignore all files in output_log
 output_log/*
+
+#ignore .pvc
+*.pvc
+
+#ignore all backups
+*.csv~
