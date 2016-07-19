@@ -8,7 +8,7 @@ import csv
 path = os.path.dirname(os.path.abspath('resource'))
 
 start = time()
-scale = 100
+scale = 10
 m = Map.Map(SCALE = scale,type = 'JSON')
 #m.connectVertices()
 m.fillAll() 
