@@ -8,7 +8,7 @@ import csv
 path = os.path.dirname(os.path.abspath('resource'))
 
 start = time()
-scale = 30
+scale = 100
 m = Map.Map(SCALE = scale,type = 'JSON')
 #m.connectVertices()
 m.fillAll() 
@@ -38,3 +38,5 @@ with open(path + '/output_log/scale_'+str(scale)+'.csv', 'w') as f:
 	w.writerow(['process time',(end-start)])
 end= time()
 print 'total time ::' + str((end - start))
+
+m.refreshMap()

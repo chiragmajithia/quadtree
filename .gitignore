@@ -1,0 +1,8 @@
+#ignore all files in output_csv
+output_csv/*
+
+#ignore all files in output_jpg
+output_jpg/*
+
+#ignore all files in output_log
+output_log/*
