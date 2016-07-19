@@ -1,0 +1,1 @@
+The directory saves output in jpg format of the runJSON.py script

@@ -1,11 +1,12 @@
 #ignore all files in output_csv
-output_csv/*
+output_csv/*.csv
 
 #ignore all files in output_jpg
-output_jpg/*
+output_jpg/*.jpg
+output_jpg/*.jpeg
 
 #ignore all files in output_log
-output_log/*
+output_log/*.csv
 
 #ignore .pvc
 *.pvc
