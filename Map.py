@@ -281,8 +281,8 @@ class Map(object):
 			print 'call back'
 			k = self.polygons.pointInPoly(y,x)
 			if k != -1:
-				self.drawBoundary(k,fill_val = 100)
-				self.fill(x,y,fill_val = 255, bound_val =100)
+				self.drawBoundary(k,fill_val = 255)
+				self.fill(x,y,fill_val = 255, bound_val =255)
 				# self.drawBoundary(k,fill_val = 255)
 				self.showMap()
 				print 'Filled'

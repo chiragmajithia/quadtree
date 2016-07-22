@@ -45,8 +45,8 @@ def main():
 			m.chooseViewMenu()
 		elif inp == 3:
 			m.addPolygonsMenu()
-		break
-
+		elif inp == 4:
+			break
 	return m
 
 def display():
