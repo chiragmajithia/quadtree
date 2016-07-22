@@ -10,7 +10,7 @@ class MapEventHandler(object):
 
 	def __init__(self):
 		self.roicolor = 'b'
-		self.click_event = None
+		self.click_event_id = None
 		self.key_event_id = None
 
 	def connect(self,fig = [], ax = [], roicolor = 'b'):

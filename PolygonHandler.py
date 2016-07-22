@@ -187,6 +187,7 @@ class PolygonHandler(object):
 		print 'Shifting euclidean coordinates to given origin done!'
 
 
+
 	def readCSV(self,path):
 		f = open(path, 'rb') # opens the csv file
 		try:

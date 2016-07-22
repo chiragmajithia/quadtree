@@ -6,6 +6,7 @@ from eventHandler import MapEventHandler
 import os
 import time
 import scipy.misc
+from roipoly import roipoly
 
 class Map(object):
 	map
@@ -14,6 +15,7 @@ class Map(object):
 	event_flag = False
 	event_cnt = 0
 	meh = MapEventHandler() 
+	r = None
 
 	def __init__(self,dim = [1,0],SCALE = 1,type = 'CSV'):
 		self.polygons = PolygonHandler()
@@ -58,7 +60,7 @@ class Map(object):
 		else:
 			(x,y,r) = self.getSeed(p,255)
 		if r:
-			self.fill(x,y)
+			self.fill(x,y,fill_val = 255, bound_val = 255)
 
 	def fillAll(self):
 		bound_val = 100
@@ -199,7 +201,7 @@ class Map(object):
 			plt.axis([min_y-10,max_y+10,min_x-10,max_x+10])
 		plt.draw()
 
-	def zoomAllUnfilledPolygons(self,check = True):
+	def zoomAllPolygons(self,event,check = True):
 		self.showMap()
 		print event.key
 		k = self.event_cnt
@@ -212,11 +214,13 @@ class Map(object):
 		elif event.key == 'escape':
 			self.event_cnt = -1
 			self.zoomPolygon(-1)
+			self.meh.disconnect()
+			print 'returning to main menu'
 			return
-		if k >= 0 or k < len(self.polygons.unfilled_polygons.keys()):
-			self.zoomPolygon(self.polygons.unfilled_polygons.keys()[k])
+		if k >= 0 or k < len(self.polygons.polygons.keys()):
+			self.zoomPolygon(self.polygons.polygons.keys()[k])
 
-	def zoomAllFilledPolygons(self,event,check = True):
+	def zoomFilledPolygons(self,event,check = True):
 		self.showMap()
 		print event.key
 		k = self.event_cnt
@@ -229,18 +233,39 @@ class Map(object):
 		elif event.key == 'escape':
 			self.event_cnt = -1
 			self.zoomPolygon(-1)
+			self.meh.disconnect()
+			print 'returning to main menu'
 			return
 		if k >= 0 or k < len(self.polygons.filled_polygons.keys()):
 			self.zoomPolygon(self.polygons.filled_polygons.keys()[k])
-			
+
+
+	def zoomUnfilledPolygons(self,event,check = True):
+		self.showMap()
+		print event.key
+		k = self.event_cnt
+		if event.key == ' ' or event.key == 'right':
+			self.event_cnt += 1
+			k = self.event_cnt
+		elif event.key == 'left' or event.key == 'backspace':
+			self.event_cnt -= 1
+			k = self.event_cnt
+		elif event.key == 'escape':
+			self.event_cnt = -1
+			self.zoomPolygon(-1)
+			self.meh.disconnect()
+			print 'returning to main menu'
+			return
+		if k >= 0 or k < len(self.polygons.unfilled_polygons.keys()):
+			self.zoomPolygon(self.polygons.unfilled_polygons.keys()[k])
 
 	def connectSeedingCallback(self):
 		self.meh.connect()
 		self.meh.eventClickConnect(self.eventFill)
 
-	def connectKeyIteratorCallback(self):
+	def connectKeyIteratorCallback(self,func):
 		self.meh.connect()
-		self.meh.eventKeyConnect(self.zoomAllFilledPolygons)
+		self.meh.eventKeyConnect(func)
 
 	def nextIterator(self,event):
 		print self.event_flag
@@ -266,8 +291,74 @@ class Map(object):
 
 	def resizeMap(self):
 		self.refreshMap()
-		plt.axis([0,self.polygons.dim[1],self.polygons.dim[0],0])
-		plt.draw()
+		if not plt.fignum_exists(1):
+			self.imgplot = plt.imshow(self.map,interpolation = 'none', cmap = 'gray_r')
+			plt.show(block = False)
+			plt.grid(1)
+			plt.ion()
+		else:
+			plt.axis([0,self.polygons.dim[1],self.polygons.dim[0],0])
+			plt.draw()
 
-	def getUnfilledPolygons(self):
-		return self.polygons.unfilled_polygons
+	def addPolygon(self,vertices):
+		k = len(self.polygons.polygons)
+		self.polygons.polygons[k] = vertices
+		self.fillPoly(k)
+		self.showMap()
+
+	def addPolygonsMenu(self):
+		try:
+			self.meh.disconnect() #surround try catch
+		except BaseException:
+			print "Error caught"
+		self.displayAddPolygonMenu()
+		self.showMap()
+		self.r =roipoly(self.addPolygonCallback)
+
+	def addPolygonCallback(self):
+		inp = 1
+		if inp == 1:
+			v = self.r.getVertices()
+			self.addPolygon(v)
+			plt.close(1)
+			self.showMap()
+		# else:
+		# 	print 'polygon discarded'
+		# 	self.addPolygon(v)
+		# 	plt.close(1)
+		# 	self.showMap()
+
+
+	def chooseViewMenu(self):
+		self.displayViewMenu()
+		inp = input('Enter a choice')
+		print ('Press space/right arrow key to move forward')
+		print ('Press left arrow key to move backward')
+		print ('Press (ESC) to stop and Right Click to seed an empty polygon')
+		if inp == 1:
+			self.connectSeedingCallback()
+			self.connectKeyIteratorCallback(self.zoomAllPolygons)
+		elif inp == 2:
+			self.connectSeedingCallback()
+			self.connectKeyIteratorCallback(self.zoomFilledPolygons)
+		elif inp == 3:
+			self.connectSeedingCallback()
+			self.connectKeyIteratorCallback(self.zoomUnfilledPolygons)
+		elif inp == 4:
+			print "Falling back to main menu"
+		else:
+			print "Illegal / Invalid input, falling back to main menu"
+
+	def displayViewMenu(self):
+		print "Enter your choice:: Do you want to Zoom"
+		print "1.  all Polygons"
+		print "2. Unfilled Polygons - the polygons for which the algorithm was not able to find seed to fill"
+		print "                     - generally, these polygons are already filled with vertices defining its edges"
+		print "3. Filled Polygons - the polygons which algorithm considers to be filled, but in cases where "
+		print "                   - the edges of the polygons self intersect, the flood-fill algorithm is not able"
+		print "                     fill the polygons completely"
+		print "4 Fall back to main menu"
+
+	def displayAddPolygonMenu(self):
+		print "Add Polygon by drawing vertices on the figure, use left click to add vertices and right click to close polygon"
+	
