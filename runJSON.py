@@ -4,11 +4,11 @@ from time import sleep, time
 import numpy as np
 import os
 import csv
-
+plt.close('all')
 path = os.path.dirname(os.path.abspath('resource'))
 
 start = time()
-scale = 10
+scale = 100
 m = Map.Map(SCALE = scale,type = 'JSON')
 #m.connectVertices()
 m.fillAll() 

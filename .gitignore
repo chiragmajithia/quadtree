@@ -9,7 +9,10 @@ output_jpg/*.jpeg
 output_log/*.csv
 
 #ignore .pvc
-*.pvc
+*.pyc
 
 #ignore all backups
 *.csv~
+
+#ignore
+roipoly

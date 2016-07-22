@@ -2,6 +2,7 @@ import ReadShapeFile
 import numpy as np
 import matplotlib.pyplot as plt
 from PolygonHandler import PolygonHandler
+from eventHandler import MapEventHandler
 import os
 import time
 import scipy.misc
@@ -10,6 +11,9 @@ class Map(object):
 	map
 	polygons = PolygonHandler()
 	imgplot = []
+	event_flag = False
+	event_cnt = 0
+	meh = MapEventHandler() 
 
 	def __init__(self,dim = [1,0],SCALE = 1,type = 'CSV'):
 		self.polygons = PolygonHandler()
@@ -24,6 +28,9 @@ class Map(object):
 		self.polygons.readFile(path,type = type)
 		self.polygons.correct()
 		self.map = np.zeros(self.polygons.dim, dtype = np.uint8)
+		self.event_flag = False
+		self.event_cnt = 0
+		self.meh = MapEventHandler()
 		#raw_input('Vertices checked for closure - correction done')
 
 	def connectVertices(self):
@@ -43,7 +50,6 @@ class Map(object):
 			self.lineSeg(v[indx],v[indx+1],fill_val = fill_val)
 			indx = indx + 1
 		print 'Vertices connected for polygon[' + str(key) + ']'
-
 
 	def fillPoly(self,p,type = 'random'):
 		self.drawBoundary(p,fill_val = 255)
@@ -168,6 +174,7 @@ class Map(object):
 		self.map = np.invert(self.map)
 
 	def showMap(self,block = False ):
+
 		if not plt.fignum_exists(1):
 			self.imgplot = plt.imshow(self.map,interpolation = 'none', cmap = 'gray_r')
 			plt.show(block = block)
@@ -178,66 +185,87 @@ class Map(object):
 			plt.draw()
 			print 'exists'
 			#time.sleep(0.01)
-    # Figure is closed
-		
-		#plt.show(block = block)
-		#plt.draw()
-		#time.sleep(1)
 
 	def zoomPolygon(self,key,highlight = True):
-		self.refreshMap()
+		# self.refreshMap()
 		if key == -1:
 			self.resizeMap()
 		else:
 			(max_x,min_x,max_y,min_y) = self.polygons.getPolygonBounds(key)
-			plt.axis([min_y-10,max_y+10,min_x-10,max_x+10])
 			if highlight:
 				self.drawBoundary(key,fill_val = 100)
 				print 'draw'
 				self.showMap()
+			plt.axis([min_y-10,max_y+10,min_x-10,max_x+10])
 		plt.draw()
 
 	def zoomAllUnfilledPolygons(self,check = True):
-		for k in self.polygons.unfilled_polygons.keys():
-			self.zoomPolygon(k)
-			if not check:
-				inp = raw_input('Press key to continue / Enter seed')
-				if inp != '':
-					inp = eval(inp)
-					self.fill(inp[0],inp[1])
-					print str(k) + 'polygon filled'
+		self.showMap()
+		print event.key
+		k = self.event_cnt
+		if event.key == ' ' or event.key == 'right':
+			self.event_cnt += 1
+			k = self.event_cnt
+		elif event.key == 'left' or event.key == 'backspace':
+			self.event_cnt -= 1
+			k = self.event_cnt
+		elif event.key == 'escape':
+			self.event_cnt = -1
+			self.zoomPolygon(-1)
+			return
+		if k >= 0 or k < len(self.polygons.unfilled_polygons.keys()):
+			self.zoomPolygon(self.polygons.unfilled_polygons.keys()[k])
+
+	def zoomAllFilledPolygons(self,event,check = True):
+		self.showMap()
+		print event.key
+		k = self.event_cnt
+		if event.key == ' ' or event.key == 'right':
+			self.event_cnt += 1
+			k = self.event_cnt
+		elif event.key == 'left' or event.key == 'backspace':
+			self.event_cnt -= 1
+			k = self.event_cnt
+		elif event.key == 'escape':
+			self.event_cnt = -1
+			self.zoomPolygon(-1)
+			return
+		if k >= 0 or k < len(self.polygons.filled_polygons.keys()):
+			self.zoomPolygon(self.polygons.filled_polygons.keys()[k])
+			
+
+	def connectSeedingCallback(self):
+		self.meh.connect()
+		self.meh.eventClickConnect(self.eventFill)
+
+	def connectKeyIteratorCallback(self):
+		self.meh.connect()
+		self.meh.eventKeyConnect(self.zoomAllFilledPolygons)
+
+	def nextIterator(self,event):
+		print self.event_flag
+		if event.key == 'N':
+			self.event_flag = False
+			print self.event_flag
+
+	def eventFill(self,event):
+		if event.inaxes:
+			x, y = event.xdata, event.ydata
+			ax = event.inaxes
+			print 'Position = ' + str([x,y])
+			print 'call back'
+			k = self.polygons.pointInPoly(y,x)
+			if k != -1:
+				self.drawBoundary(k,fill_val = 100)
+				self.fill(x,y,fill_val = 255, bound_val =100)
+				# self.drawBoundary(k,fill_val = 255)
+				self.showMap()
+				print 'Filled'
 			else:
-				time.sleep(0.5)
-
-	def zoomAllFilledPolygons(self,check = True):
-		for k in self.polygons.filled_polygons.keys():
-			self.zoomPolygon(k)
-			if not check:
-
-				cntd = 'Y'
-				while cntd == 'Y':
-					inp = raw_input('Press key to continue / Enter seed')
-					if inp != '':
-						inp = eval(inp)
-						k_ = self.polygons.pointInPoly(inp[0],inp[1])
-						if k == k_ :
-							self.fill(inp[1],inp[0],fill_val = 100, bound_val =100)
-							print str(k) + 'polygon filled'
-							self.showMap()
-							raw_input('Press Any Key to Continue')
-						else:
-							print 'Seed outside given polygon'
-						cntd = raw_input('Continue with this polygon? Y/N')
-						if(cntd == 'N'):
-							break
-					else:
-						break
-
-			else:
-				time.sleep(0.5)
-
+				print 'point is outside any polygon'
 
 	def resizeMap(self):
+		self.refreshMap()
 		plt.axis([0,self.polygons.dim[1],self.polygons.dim[0],0])
 		plt.draw()
 
